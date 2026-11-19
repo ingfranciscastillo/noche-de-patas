@@ -14,6 +14,8 @@ export class Hud {
   private toastText: Phaser.GameObjects.Text;
   private promptText: Phaser.GameObjects.Text;
   private debugText: Phaser.GameObjects.Text;
+  private modeText: Phaser.GameObjects.Text;
+  private lastMode = '';
   private blood: Phaser.GameObjects.Image | null = null;
   private hearts: Phaser.GameObjects.Image[] = [];
   private lastHealth = -1;
@@ -32,6 +34,7 @@ export class Hud {
     this.objective = fix(scene.add.text(VIEW_W / 2, VIEW_H - 26, '', { ...style, fontSize: '20px', color: '#8fa39a' }).setOrigin(0.5, 1));
     this.toastText = fix(scene.add.text(VIEW_W / 2, 80, '', { ...style, fontSize: '24px', color: '#d8d0b0', align: 'center' }).setOrigin(0.5));
     this.promptText = scene.add.text(0, 0, '', { ...style, fontSize: '20px', color: '#e8e0c0', backgroundColor: '#000000aa', padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(150);
+    this.modeText = fix(scene.add.text(20, 74, '', { ...style, fontSize: '20px', color: '#8fa39a' }));
     this.debugText = fix(scene.add.text(12, VIEW_H - 12, '', { ...style, fontSize: '16px', color: '#7fff9f' }).setOrigin(0, 1));
   }
 
@@ -67,6 +70,13 @@ export class Hud {
     if (p.health !== this.lastHealth) {
       this.lastHealth = p.health;
       this.hearts.forEach((h, i) => h.setTexture(i < p.health ? 'heart_on' : 'heart_off'));
+    }
+
+    // --- Modo de movimiento (solo cuando no es caminar normal)
+    const mode = p.hidden ? 'ESCONDIDO' : p.exhausted ? 'AGOTADO · JADEAS' : p.mode === 'sneak' || (p.sneakHeld && p.mode === 'idle') ? 'SIGILO' : p.mode === 'run' ? 'CORRIENDO · RUIDO' : '';
+    if (mode !== this.lastMode) {
+      this.lastMode = mode;
+      this.modeText.setText(mode).setColor(mode.startsWith('CORRIENDO') || mode.startsWith('AGOTADO') ? '#c98a5a' : '#8fa39a');
     }
 
     // --- Fusibles
@@ -118,6 +128,6 @@ export class Hud {
   destroy() {
     this.blood?.destroy();
     this.hearts.forEach((h) => h.destroy());
-    [this.g, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText].forEach((o) => o.destroy());
+    [this.g, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText, this.modeText].forEach((o) => o.destroy());
   }
 }

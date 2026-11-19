@@ -117,11 +117,9 @@ export class GameMap {
     return t === T.FLOOR || t === T.DOOR;
   }
 
+  /** Regla única y coherente: lo que no puedes atravesar tampoco lo atraviesa la luz (mesas y muebles incluidos). */
   blocksLight(tx: number, ty: number): boolean {
-    const t = this.at(tx, ty);
-    if (t === T.WALL || t === T.VENT || t === T.LOCKER || t === T.EXIT || t === T.GEN) return true;
-    if (t === T.DOOR) return !this.door(tx, ty)!.open;
-    return false;
+    return this.isSolid(tx, ty);
   }
 
   roomAt(px: number, py: number): RoomDef | undefined {

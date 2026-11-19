@@ -6,7 +6,7 @@ export const VIEW_H = 540;
 
 export const PLAYER = {
   radius: 9,
-  speedSneak: 55,
+  speedSneak: 42, // 40 % de caminar: tiene que notarse
   speedWalk: 105,
   speedRun: 175,
   limpMultiplier: 0.55,
@@ -56,6 +56,9 @@ export const NOISE = {
 
 export const ITEMS = {
   fusesNeeded: 3,
+  fuseMinDistFromStart: 420, // px: ningún fusible en las salas pegadas a Recepción
+  fuseMinSpacing: 300, // px entre fusibles, para obligar a recorrer el laboratorio
+  glintRange: 230, // px: el destello de fusibles/pilas solo se ve de cerca
   batteriesPlaced: 5,
   bottlesPlaced: 3,
   throwRange: 230,

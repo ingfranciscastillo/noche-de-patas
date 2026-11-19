@@ -34,6 +34,8 @@ export class Player {
   private lastStamina = STAMINA.max;
   private walkPhase = 0;
   private hitFlash = 0;
+  private crouchK = 0;
+  sneakHeld = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     // Textura 'pbody' = cuadrado de 2*radio px generado en Boot; el cuerpo es un círculo exacto.
@@ -60,6 +62,7 @@ export class Player {
       return;
     }
 
+    this.sneakHeld = intent.sneak;
     let mx = intent.mx, my = intent.my;
     const moving = mx !== 0 || my !== 0;
     if (moving) {
@@ -138,8 +141,12 @@ export class Player {
     g.fillRect(x + px * 4 + ca * bob - 2, y + py * 4 + sa * bob - 2, 4, 4);
     g.fillRect(x - px * 4 - ca * bob - 2, y - py * 4 - sa * bob - 2, 4, 4);
     // Cuerpo: sprite rotado hacia donde apunta
-    this.img.setPosition(x, y).setRotation(a);
+    // Agachado en sigilo: más pequeño y oscuro (transición suave)
+    const crouch = this.mode === 'sneak' || (this.sneakHeld && this.mode === 'idle');
+    this.crouchK += ((crouch ? 1 : 0) - this.crouchK) * Math.min(1, dt * 12);
+    this.img.setPosition(x, y).setRotation(a).setScale(1 - 0.2 * this.crouchK);
     if (this.hitFlash > 0) this.img.setTint(0xff7060);
+    else if (this.crouchK > 0.05) { const c = Math.round(255 - 90 * this.crouchK); this.img.setTint(Phaser.Display.Color.GetColor(c, c, c)); }
     else this.img.clearTint();
   }
 

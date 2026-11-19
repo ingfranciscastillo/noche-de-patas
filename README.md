@@ -89,8 +89,14 @@ Decisiones no cubiertas por el brief, tomadas por la opción más simple que res
 - **Contacto con la araña:** muerde si te alcanza mientras caza un ruido. Si está quieta
   escuchando y tú estás quieto o en sigilo, rozarla no te delata (solo oye).
 - **Escondido, la linterna se apaga** automáticamente y vuelve a su estado al salir.
-- **Pistas visuales mínimas en la oscuridad:** fusibles y pilas emiten un destello tenue y la señal
-  de salida brilla (roja = sin energía, verde = abierta), para que explorar a oscuras sea justo.
+- **Pistas visuales mínimas en la oscuridad:** fusibles y pilas emiten un destello tenue que solo
+  se ve a menos de ~230 px, y la señal de salida brilla (roja = sin energía, verde = abierta).
+- **Reparto de fusibles:** 3 salas distintas al azar, nunca en las salas pegadas a Recepción
+  (≥ 420 px del inicio) y separados ≥ 300 px entre sí, para obligar a recorrer el laboratorio.
+- **Luz y muebles:** todo lo que no puedes atravesar (muros, puertas cerradas, mesas, estanterías,
+  casilleros, generador) también bloquea la luz y la línea de visión.
+- **Sigilo:** 40 % de la velocidad al caminar; el personaje se agacha y el HUD indica el modo
+  (SIGILO / CORRIENDO / AGOTADO / ESCONDIDO).
 - **Los fusibles se pueden colocar de uno en uno** en el generador.
 - **Se gana al llegar a la salida** una vez reactivado el generador (sin pulsar nada).
 - **Pausa automática** si la ventana pierde el foco.

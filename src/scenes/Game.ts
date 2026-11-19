@@ -229,8 +229,30 @@ export class GameScene extends Phaser.Scene implements GameCtx {
       const r = m.roomOfTile(c.x, c.y)?.name ?? '?';
       byRoom.set(r, [...(byRoom.get(r) ?? []), c]);
     }
-    const rooms = shuffle([...byRoom.keys()]).slice(0, ITEMS.fusesNeeded);
-    for (const r of rooms) this.addItem('fuse', Phaser.Utils.Array.GetRandom(byRoom.get(r)!));
+    // Lejos del inicio, en salas distintas y separados entre sí (con alternativa si no cabe)
+    const start = m.center(m.spawns.P.x, m.spawns.P.y);
+    const far = (c: Pt) => { const p = m.center(c.x, c.y); return Math.hypot(p.x - start.x, p.y - start.y) >= ITEMS.fuseMinDistFromStart; };
+    const chosen: Pt[] = [];
+    for (let attempt = 0; attempt < 60 && chosen.length < ITEMS.fusesNeeded; attempt++) {
+      chosen.length = 0;
+      for (const r of shuffle([...byRoom.keys()])) {
+        const pick = shuffle(byRoom.get(r)!.filter(far))[0];
+        if (!pick) continue;
+        const pc = m.center(pick.x, pick.y);
+        if (chosen.some((o) => { const oc = m.center(o.x, o.y); return Math.hypot(oc.x - pc.x, oc.y - pc.y) < ITEMS.fuseMinSpacing; })) continue;
+        chosen.push(pick);
+        if (chosen.length === ITEMS.fusesNeeded) break;
+      }
+    }
+    if (chosen.length < ITEMS.fusesNeeded) {
+      // Respaldo: cualquier sala distinta lejos del inicio
+      chosen.length = 0;
+      for (const r of shuffle([...byRoom.keys()])) {
+        const pick = byRoom.get(r)!.find(far);
+        if (pick && chosen.length < ITEMS.fusesNeeded) chosen.push(pick);
+      }
+    }
+    for (const c of chosen) this.addItem('fuse', c);
     for (const c of shuffle(m.candidates.b).slice(0, ITEMS.batteriesPlaced)) this.addItem('battery', c);
     for (const c of shuffle(m.candidates.o).slice(0, ITEMS.bottlesPlaced)) this.addItem('bottle', c);
   }
@@ -349,10 +371,15 @@ export class GameScene extends Phaser.Scene implements GameCtx {
   private glows(): Glow[] {
     const t = this.now;
     const out: Glow[] = [];
+    const p = this.player;
     for (const it of this.items) {
       if (it.taken) continue;
-      if (it.kind === 'fuse') out.push({ x: it.x, y: it.y, r: 14, a: 0.25 + 0.2 * Math.max(0, Math.sin(t * 2 + it.x)) });
-      else if (it.kind === 'battery') out.push({ x: it.x, y: it.y, r: 10, a: 0.12 + 0.1 * Math.max(0, Math.sin(t * 1.5 + it.y)) });
+      // El destello solo se ve de cerca (y se desvanece con la distancia)
+      const d = Math.hypot(it.x - p.x, it.y - p.y);
+      if (d > ITEMS.glintRange) continue;
+      const fade = 1 - d / ITEMS.glintRange;
+      if (it.kind === 'fuse') out.push({ x: it.x, y: it.y, r: 14, a: (0.25 + 0.2 * Math.max(0, Math.sin(t * 2 + it.x))) * fade });
+      else if (it.kind === 'battery') out.push({ x: it.x, y: it.y, r: 10, a: (0.12 + 0.1 * Math.max(0, Math.sin(t * 1.5 + it.y))) * fade });
     }
     for (const e of this.map.exitTiles) {
       const c = this.map.center(e.x, e.y);
