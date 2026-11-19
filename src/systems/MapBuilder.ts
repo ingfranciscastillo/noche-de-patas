@@ -289,7 +289,7 @@ export class GameMap {
     const canvas = document.createElement('canvas');
     canvas.width = this.pxW;
     canvas.height = this.pxH;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!; // leemos píxeles bajo las puertas
     ctx.imageSmoothingEnabled = false;
     const rnd = mulberry32(1337);
     const tint: Record<string, string> = {

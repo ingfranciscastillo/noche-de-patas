@@ -50,7 +50,7 @@ export class Millipede extends Creature {
 
     switch (this.state) {
       case 'SLEEP': {
-        if (this.stateTime >= MILLIPEDE.wakeDelay || this.distToPlayer() < 200) { this.setState('CHASE'); this.repath = 0; }
+        if (this.stateTime >= MILLIPEDE.wakeDelay || this.distToPlayer() < 200 || ctx.alarmActive) { this.setState('CHASE'); this.repath = 0; }
         break;
       }
       case 'CHASE': {

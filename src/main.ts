@@ -16,6 +16,7 @@ const game = new Phaser.Game({
   pixelArt: true,
   roundPixels: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  audio: { noAudio: true }, // usamos nuestro AudioEngine; así no se crea ningún AudioContext antes del primer clic
   physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
   fps: { target: 60 },
   scene: [BootScene, MenuScene, GameScene, PauseScene, GameOverScene, WinScene],
