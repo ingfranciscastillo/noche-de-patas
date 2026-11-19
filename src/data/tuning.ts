@@ -68,6 +68,7 @@ export const ALARM = {
 
 export const MILLIPEDE = {
   speed: 45,
+  wakeDelay: 20, // segundos dormido al empezar la noche (se oye su roce lejano)
   segments: 16,
   segmentSpacing: 9,
   radius: 10,
@@ -80,7 +81,7 @@ export const MILLIPEDE = {
   coilBlockRadius: 26,
   hideWaitPatience: 9, // espera frente al escondite y luego se aburre
   retreatDuration: 10,
-  stunAfterHit: 3,
+  stunAfterHit: 4, // tras golpear se queda quieto: margen para huir cojeando
   audioRange: 420,
 };
 

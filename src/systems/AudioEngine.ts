@@ -413,9 +413,13 @@ class AudioEngineImpl {
     this.filtered(this.sfx, 'highpass', on ? 3000 : 2400, 2, 0.25, 0.001, 0.03);
   }
 
-  door() {
+  /** Puerta que chirría; dx/dy relativos al jugador (0,0 = la abre el jugador). */
+  door(dx = 0, dy = 0) {
     if (!this.ctx) return;
     const c = this.ctx;
+    const sp = AudioEngineImpl.spatial(dx, dy, 600);
+    if (sp.vol < 0.01) return;
+    const out = this.spatialShot(sp.pan, sp.vol, this.sfx, 2);
     const o = c.createOscillator();
     o.type = 'sawtooth';
     o.frequency.setValueAtTime(340, this.t);
@@ -429,10 +433,10 @@ class AudioEngineImpl {
     g.gain.setValueAtTime(0.0001, this.t);
     g.gain.exponentialRampToValueAtTime(0.22, this.t + 0.1);
     g.gain.exponentialRampToValueAtTime(0.0001, this.t + 0.85);
-    o.connect(bp).connect(g).connect(this.sfx);
+    o.connect(bp).connect(g).connect(out);
     o.start();
     o.stop(this.t + 0.9);
-    this.filtered(this.sfx, 'lowpass', 260, 1, 0.6, 0.005, 0.25, this.t + 0.8);
+    this.filtered(out, 'lowpass', 260, 1, 0.6, 0.005, 0.25, this.t + 0.8);
   }
 
   battery() {
