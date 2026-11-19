@@ -1,0 +1,50 @@
+// Generado a mano (ver scratch genmap.py). Leyenda en MapBuilder.ts
+// # muro  . suelo  D puerta  L casillero(escondite)  T mesa(escondite)  k mueble sólido
+// V rejilla  G generador  X salida  f/b/o candidatos fusible/pila/botella  P/M/S inicios
+export const MAP_ROWS: string[] = [
+  '###############V########V###############',
+  '#LL.LL.LL#........b#k.....L#...........#',
+  '#........#.........#.......#..kk...kk..#',
+  '#........#..TT..TT.#..TT...#..kk...kk..#',
+  '#..kkk...D.................#.....M.....V',
+  '#........#..TT..TT.........#...........#',
+  '#.....f..#.........#.....f.#.f...T...f.#',
+  '#fb......#.f.......#b......#b..........#',
+  '####D#########D####V###D#########D######',
+  '#.............................o........#',
+  '#......o...............................#',
+  '######D###########D######.#######D######',
+  '#....o.....L#.........o.#.#...........b#',
+  '#...........#...........#.V.kk.......k.#',
+  '#.kkkk.kkkk.#..TT...TT..#.#............#',
+  'V.....S.....#...........D.#.....GG....L#',
+  '#...........V...........#.D............#',
+  '#.kkkk.kkkk.#..TT...TT..#b#............V',
+  '#.........f.#..........f#.#.kk.......k.#',
+  '#b..........#b..........#.#.........o..#',
+  '###D###########D#########.####V#########',
+  '#.....................................b#',
+  '#......................................#',
+  '######D#############D###########D#######',
+  '#.T.T....T.T.#............#.L.L....L.L.#',
+  '#............#..kk.....P..o............#',
+  '#L........o.fb............#....kkk....f#',
+  '########V##########XX#############V#####',
+];
+
+export interface RoomDef { name: string; x1: number; y1: number; x2: number; y2: number; }
+export const ROOMS: RoomDef[] = [
+  { name: 'Vestuario', x1: 1, y1: 1, x2: 8, y2: 7 },
+  { name: 'Laboratorio', x1: 10, y1: 1, x2: 18, y2: 7 },
+  { name: 'Oficina', x1: 20, y1: 1, x2: 26, y2: 7 },
+  { name: 'Cuarentena', x1: 28, y1: 1, x2: 38, y2: 7 },
+  { name: 'Pasillo norte', x1: 1, y1: 9, x2: 38, y2: 10 },
+  { name: 'Almacén', x1: 1, y1: 12, x2: 11, y2: 19 },
+  { name: 'Comedor', x1: 13, y1: 12, x2: 23, y2: 19 },
+  { name: 'Conducto de servicio', x1: 25, y1: 11, x2: 25, y2: 20 },
+  { name: 'Sala de máquinas', x1: 27, y1: 12, x2: 38, y2: 19 },
+  { name: 'Pasillo sur', x1: 1, y1: 21, x2: 38, y2: 22 },
+  { name: 'Enfermería', x1: 1, y1: 24, x2: 12, y2: 26 },
+  { name: 'Recepción', x1: 14, y1: 24, x2: 25, y2: 26 },
+  { name: 'Archivo', x1: 27, y1: 24, x2: 38, y2: 26 },
+];
