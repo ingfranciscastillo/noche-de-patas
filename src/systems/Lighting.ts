@@ -18,10 +18,9 @@ export class Lighting {
   private tex: Phaser.Textures.CanvasTexture;
   readonly image: Phaser.GameObjects.Image;
   private tintGfx: Phaser.GameObjects.Graphics;
-  private grain: HTMLCanvasElement[] = [];
-  private grainIdx = 0;
+  private grain: Phaser.GameObjects.TileSprite;
   private grainTimer = 0;
-  private vignette: CanvasGradient;
+  private vignette: Phaser.GameObjects.Image;
   private sw: number;
   private sh: number;
   private s = LIGHT.lightScale;
@@ -42,25 +41,36 @@ export class Lighting {
     this.ctx = this.tex.context;
     this.image = scene.add.image(0, 0, 'darkness').setOrigin(0).setScrollFactor(0).setScale(1 / this.s).setDepth(100);
     this.tintGfx = scene.add.graphics().setDepth(50).setBlendMode(Phaser.BlendModes.ADD);
-    const c = this.ctx;
-    this.vignette = c.createRadialGradient(this.sw / 2, this.sh / 2, this.sh * 0.3, this.sw / 2, this.sh / 2, this.sw * 0.62);
-    this.vignette.addColorStop(0, 'rgba(0,0,0,0)');
-    this.vignette.addColorStop(1, 'rgba(0,0,0,0.9)');
-    // Grano de película: 4 fotogramas pregenerados
-    for (let i = 0; i < 4; i++) {
-      const g = document.createElement('canvas');
-      g.width = Math.ceil(this.sw / 2);
-      g.height = Math.ceil(this.sh / 2);
-      const gc = g.getContext('2d')!;
-      const img = gc.createImageData(g.width, g.height);
+    // Viñeta y grano: texturas estáticas dibujadas por WebGL (más barato que componerlas en el canvas cada frame)
+    if (!scene.textures.exists('vignette')) {
+      const vt = scene.textures.createCanvas('vignette', this.sw, this.sh)!;
+      const vc = vt.context;
+      const vg = vc.createRadialGradient(this.sw / 2, this.sh / 2, this.sh * 0.3, this.sw / 2, this.sh / 2, this.sw * 0.62);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, 'rgba(0,0,0,0.9)');
+      vc.fillStyle = vg;
+      vc.fillRect(0, 0, this.sw, this.sh);
+      vt.refresh();
+      // Grano: un tile de ruido mayor que la pantalla; se desplaza al azar cada pocos frames
+      const gw = 256, gh = 256;
+      const gt = scene.textures.createCanvas('grain', gw, gh)!;
+      const img = gt.context.createImageData(gw, gh);
       for (let p = 0; p < img.data.length; p += 4) {
         const v = Math.random() * 255;
         img.data[p] = img.data[p + 1] = img.data[p + 2] = v;
         img.data[p + 3] = 255;
       }
-      gc.putImageData(img, 0, 0);
-      this.grain.push(g);
+      gt.context.putImageData(img, 0, 0);
+      gt.refresh();
     }
+    this.vignette = scene.add.image(0, 0, 'vignette').setOrigin(0).setScrollFactor(0).setScale(1 / this.s).setDepth(101);
+    this.grain = scene.add
+      .tileSprite(0, 0, VIEW_W, VIEW_H, 'grain')
+      .setOrigin(0)
+      .setScrollFactor(0)
+      .setDepth(102)
+      .setAlpha(FX.grainAlpha)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY); // solo granula lo iluminado, no levanta los negros
   }
 
   private cast(ox: number, oy: number, a0: number, a1: number, rays: number, range: number): Pt[] {
@@ -132,25 +142,18 @@ export class Lighting {
     }
 
     c.globalCompositeOperation = 'source-over';
-    c.fillStyle = this.vignette;
-    c.fillRect(0, 0, this.sw, this.sh);
-
     if (flash && flash.a > 0) {
       c.fillStyle = `rgba(${flash.r},${flash.g},${flash.b},${flash.a})`;
       c.fillRect(0, 0, this.sw, this.sh);
     }
 
-    // Grano
+    // Grano: desplazar el tile cada 50 ms
     this.grainTimer -= dt;
     if (this.grainTimer <= 0) {
       this.grainTimer = 0.05;
-      this.grainIdx = (this.grainIdx + 1) % this.grain.length;
+      this.grain.tilePositionX = Math.floor(Math.random() * 256);
+      this.grain.tilePositionY = Math.floor(Math.random() * 256);
     }
-    c.globalAlpha = FX.grainAlpha;
-    c.globalCompositeOperation = 'overlay';
-    c.drawImage(this.grain[this.grainIdx], 0, 0, this.sw, this.sh);
-    c.globalAlpha = 1;
-    c.globalCompositeOperation = 'source-over';
 
     this.tex.refresh();
   }
@@ -181,5 +184,7 @@ export class Lighting {
   destroy() {
     this.image.destroy();
     this.tintGfx.destroy();
+    this.vignette.destroy();
+    this.grain.destroy();
   }
 }

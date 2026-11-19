@@ -14,6 +14,7 @@ export interface MoveIntent {
 export class Player {
   sprite: Phaser.Physics.Arcade.Image;
   private gfx: Phaser.GameObjects.Graphics;
+  private img: Phaser.GameObjects.Image;
   private staminaGfx: Phaser.GameObjects.Graphics;
   health = PLAYER.maxHealth;
   stamina = STAMINA.max;
@@ -39,6 +40,7 @@ export class Player {
     this.sprite = scene.physics.add.image(x, y, 'pbody').setVisible(false);
     this.sprite.setCircle(PLAYER.radius);
     this.gfx = scene.add.graphics().setDepth(10);
+    this.img = scene.add.image(x, y, 'player').setDepth(10);
     this.staminaGfx = scene.add.graphics().setDepth(101);
   }
 
@@ -120,38 +122,30 @@ export class Player {
       sg.lineStyle(2, 0x000000, a * 0.6).beginPath().arc(this.x, this.y, 17, 0, Math.PI * 2).strokePath();
       sg.lineStyle(2, col, a).beginPath().arc(this.x, this.y, 17, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * this.stamina) / STAMINA.max).strokePath();
     }
+    this.img.setVisible(!this.hidden);
     if (this.hidden) return;
 
     const x = Math.round(this.x), y = Math.round(this.y);
     const a = this.aim;
     const ca = Math.cos(a), sa = Math.sin(a);
     const px = -sa, py = ca; // perpendicular
-    const bob = this.mode === 'idle' ? 0 : Math.sin(this.walkPhase) * 1.5;
+    const bob = this.mode === 'idle' ? 0 : Math.sin(this.walkPhase) * 2;
     const blink = this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0;
+    this.img.setVisible(!blink);
     if (blink) return;
-
-    // Sombra
-    g.fillStyle(0x000000, 0.4).fillEllipse(x + 1, y + 2, 20, 16);
-    // Pies (alternan al caminar)
+    // Pies (alternan al caminar): rectángulos baratos
     g.fillStyle(0x1b1d1f);
-    g.fillCircle(x + px * 4 + ca * bob, y + py * 4 + sa * bob, 3);
-    g.fillCircle(x - px * 4 - ca * bob, y - py * 4 - sa * bob, 3);
-    // Torso (chaqueta)
-    const torso = this.hitFlash > 0 ? 0x7a3a34 : 0x2f4147;
-    g.fillStyle(torso).fillCircle(x, y, 8);
-    g.fillStyle(0x3b525a).fillCircle(x - ca * 1, y - sa * 1, 6);
-    // Brazo con linterna
-    const hx = x + ca * 9 + px * 4, hy = y + sa * 9 + py * 4;
-    g.lineStyle(3, 0x2f4147).lineBetween(x + px * 5, y + py * 5, hx, hy);
-    g.fillStyle(0x7d7f80).fillRect(hx - 2, hy - 2, 4, 4);
-    if (this.flashlightOn) g.fillStyle(0xfff1c0).fillRect(hx + ca * 2 - 1, hy + sa * 2 - 1, 2, 2);
-    // Cabeza
-    g.fillStyle(0x2a211b).fillCircle(x - ca * 0.5, y - sa * 0.5, 5);
-    g.fillStyle(0xc2a58a).fillCircle(x + ca * 1.5, y + sa * 1.5, 2.5);
+    g.fillRect(x + px * 4 + ca * bob - 2, y + py * 4 + sa * bob - 2, 4, 4);
+    g.fillRect(x - px * 4 - ca * bob - 2, y - py * 4 - sa * bob - 2, 4, 4);
+    // Cuerpo: sprite rotado hacia donde apunta
+    this.img.setPosition(x, y).setRotation(a);
+    if (this.hitFlash > 0) this.img.setTint(0xff7060);
+    else this.img.clearTint();
   }
 
   destroy() {
     this.gfx.destroy();
+    this.img.destroy();
     this.staminaGfx.destroy();
     this.sprite.destroy();
   }

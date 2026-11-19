@@ -135,7 +135,7 @@ export const FX = {
   hitShakeIntensity: 0.012,
   aberrationTime: 0.45,
   flickerChance: 0.004, // por frame, parpadeo ocasional de la linterna
-  grainAlpha: 0.07,
+  grainAlpha: 0.22,
 };
 
 export const AUDIO = {

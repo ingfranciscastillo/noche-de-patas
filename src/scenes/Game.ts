@@ -12,7 +12,7 @@ import { GameMap, Pt, T } from '../systems/MapBuilder';
 import { NoiseSystem } from '../systems/NoiseSystem';
 
 type ItemKind = 'fuse' | 'battery' | 'bottle';
-interface Item { kind: ItemKind; x: number; y: number; gfx: Phaser.GameObjects.Graphics; taken: boolean; }
+interface Item { kind: ItemKind; x: number; y: number; gfx: Phaser.GameObjects.Image; taken: boolean; }
 interface Thrown { x: number; y: number; tx: number; ty: number; vx: number; vy: number; gfx: Phaser.GameObjects.Graphics; spin: number; }
 
 type Interactable =
@@ -50,6 +50,7 @@ export class GameScene extends Phaser.Scene implements GameCtx {
   private debug = false;
   private debugGfx!: Phaser.GameObjects.Graphics;
   private propsGfx!: Phaser.GameObjects.Graphics;
+  private ventGfx!: Phaser.GameObjects.Graphics;
   private blockers!: Phaser.Physics.Arcade.StaticGroup;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private noiseTimer = 0;
@@ -102,6 +103,7 @@ export class GameScene extends Phaser.Scene implements GameCtx {
     this.map.buildDoors(this.physics);
     this.map.buildVents();
     this.propsGfx = this.add.graphics().setDepth(3);
+    this.ventGfx = this.add.graphics().setDepth(2);
     this.shards = this.add.graphics().setDepth(3);
     this.blockers = this.physics.add.staticGroup();
     const gens = this.map.generator.map((g) => this.map.center(g.x, g.y));
@@ -235,23 +237,9 @@ export class GameScene extends Phaser.Scene implements GameCtx {
 
   private addItem(kind: ItemKind, t: Pt) {
     const c = this.map.center(t.x, t.y);
-    const g = this.add.graphics().setDepth(4);
-    const x = c.x, y = c.y;
-    g.fillStyle(0x000000, 0.4).fillEllipse(x + 1, y + 4, 14, 6);
-    if (kind === 'fuse') {
-      g.fillStyle(0x8a6d2a).fillRect(x - 6, y - 3, 12, 6);
-      g.fillStyle(0xd9b555).fillRect(x - 5, y - 2, 10, 2);
-      g.fillStyle(0xaeb8b8).fillRect(x - 8, y - 2, 2, 4).fillRect(x + 6, y - 2, 2, 4);
-    } else if (kind === 'battery') {
-      g.fillStyle(0x3d5a3a).fillRect(x - 3, y - 6, 6, 11);
-      g.fillStyle(0x6f9a5c).fillRect(x - 2, y - 5, 2, 9);
-      g.fillStyle(0xaeb8b8).fillRect(x - 1, y - 8, 2, 2);
-    } else {
-      g.fillStyle(0x2f4a33).fillRect(x - 3, y - 3, 6, 8);
-      g.fillStyle(0x2f4a33).fillRect(x - 1, y - 7, 2, 4);
-      g.fillStyle(0x7fa880, 0.8).fillRect(x - 2, y - 2, 1, 5);
-    }
-    this.items.push({ kind, x, y, gfx: g, taken: false });
+    const key = kind === 'fuse' ? 'it_fuse' : kind === 'battery' ? 'it_battery' : 'it_bottle';
+    const img = this.add.image(c.x, c.y, key).setDepth(4);
+    this.items.push({ kind, x: c.x, y: c.y, gfx: img, taken: false });
   }
 
   // ---------------------------------------------------------------- bucle
@@ -327,7 +315,8 @@ export class GameScene extends Phaser.Scene implements GameCtx {
 
     p.draw(dt);
     for (const c of this.creatures) c.draw(this.time.now);
-    for (const v of this.map.vents) if (v.shake > 0 || v.gfx.getData('s')) { this.map.drawVent(v, this.time.now); v.gfx.setData('s', v.shake > 0); }
+    this.ventGfx.clear();
+    for (const v of this.map.vents) if (v.shake > 0) this.map.drawVent(this.ventGfx, v, this.time.now);
     this.drawProps();
 
     // Parpadeo de la linterna

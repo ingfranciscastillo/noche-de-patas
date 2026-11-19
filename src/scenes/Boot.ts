@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { PLAYER, VIEW_W } from '../data/tuning';
+import { VIEW_W } from '../data/tuning';
+import { generateTextures } from '../systems/Textures';
 import { Audio } from '../systems/AudioEngine';
 import { FONT } from '../systems/Hud';
 import { loadSave } from '../systems/Save';
@@ -11,14 +12,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Textura del cuerpo físico del jugador (invisible): cuadrado de 2*radio
-    if (!this.textures.exists('pbody')) {
-      const s = PLAYER.radius * 2;
-      const t = this.textures.createCanvas('pbody', s, s)!;
-      t.context.fillStyle = '#fff';
-      t.context.fillRect(0, 0, s, s);
-      t.refresh();
-    }
+    generateTextures(this);
 
     const cx = VIEW_W / 2;
     this.add.text(cx, 130, 'AVISO DE CONTENIDO', { fontFamily: FONT, fontSize: '26px', color: '#c9b37a', fontStyle: 'bold' }).setOrigin(0.5);

@@ -23,8 +23,8 @@ export interface Door {
   tx: number;
   ty: number;
   open: boolean;
-  gfx: Phaser.GameObjects.Graphics;
   body: Phaser.GameObjects.Zone;
+  floor: ImageData; // píxeles del suelo bajo la puerta, para redibujarla abierta
   vertical: boolean; // la puerta separa izquierda/derecha
 }
 
@@ -32,7 +32,6 @@ export interface Vent {
   tx: number;
   ty: number;
   out: Pt; // casilla de suelo por la que sale el ciempiés (centro en px)
-  gfx: Phaser.GameObjects.Graphics;
   shake: number;
 }
 
@@ -62,6 +61,8 @@ export class GameMap {
   exitTiles: Pt[] = [];
   walkableTiles: Pt[] = [];
   private doorAt = new Map<number, Door>();
+  private mapTex: Phaser.Textures.CanvasTexture | null = null;
+  private mctx: CanvasRenderingContext2D | null = null;
 
   constructor(private scene: Phaser.Scene) {
     this.h = MAP_ROWS.length;
@@ -211,20 +212,23 @@ export class GameMap {
     return zones;
   }
 
+  /** Requiere buildTexture() antes: las puertas se pintan dentro de la textura del mapa. */
   buildDoors(physics: Phaser.Physics.Arcade.ArcadePhysics) {
+    const c = this.mctx!;
     for (let y = 0; y < this.h; y++)
       for (let x = 0; x < this.w; x++) {
         if (this.at(x, y) !== T.DOOR) continue;
-        const c = this.center(x, y);
-        const body = this.scene.add.zone(c.x, c.y, TILE, TILE);
+        const ce = this.center(x, y);
+        const body = this.scene.add.zone(ce.x, ce.y, TILE, TILE);
         physics.add.existing(body, true);
         const vertical = this.at(x - 1, y) !== T.WALL && this.at(x + 1, y) !== T.WALL;
-        const gfx = this.scene.add.graphics().setDepth(2);
-        const door: Door = { tx: x, ty: y, open: false, gfx, body, vertical };
+        const floor = c.getImageData(x * TILE, y * TILE, TILE, TILE);
+        const door: Door = { tx: x, ty: y, open: false, body, vertical, floor };
         this.doors.push(door);
         this.doorAt.set(this.idx(x, y), door);
         this.drawDoor(door);
       }
+    this.mapTex!.refresh();
   }
 
   openDoor(door: Door) {
@@ -232,25 +236,23 @@ export class GameMap {
     door.open = true;
     (door.body.body as Phaser.Physics.Arcade.StaticBody).enable = false;
     this.drawDoor(door);
+    this.mapTex!.refresh();
   }
 
-  drawDoor(d: Door) {
-    const g = d.gfx;
-    g.clear();
+  private drawDoor(d: Door) {
+    const c = this.mctx!;
     const x = d.tx * TILE, y = d.ty * TILE;
+    c.putImageData(d.floor, x, y);
+    const r = (xx: number, yy: number, w: number, h: number, col: string) => { c.fillStyle = col; c.fillRect(x + xx, y + yy, w, h); };
     if (!d.open) {
-      g.fillStyle(0x3b3a34).fillRect(x, y, TILE, TILE);
-      g.fillStyle(0x4c4a40).fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
-      g.fillStyle(0x2a2925);
-      if (d.vertical) { g.fillRect(x + 15, y + 2, 2, TILE - 4); g.fillStyle(0x8a826a).fillRect(x + 11, y + 14, 3, 4); }
-      else { g.fillRect(x + 2, y + 15, TILE - 4, 2); g.fillStyle(0x8a826a).fillRect(x + 14, y + 11, 4, 3); }
-      g.fillStyle(0x5b2c22).fillRect(x + 4, y + 4, 4, 2); // óxido
-    } else {
-      // Hoja abierta pegada al marco
-      g.fillStyle(0x3b3a34);
-      if (d.vertical) g.fillRect(x, y, TILE, 4);
-      else g.fillRect(x, y, 4, TILE);
-    }
+      r(0, 0, TILE, TILE, '#3b3a34');
+      r(2, 2, TILE - 4, TILE - 4, '#4c4a40');
+      if (d.vertical) { r(15, 2, 2, TILE - 4, '#2a2925'); r(11, 14, 3, 4, '#8a826a'); }
+      else { r(2, 15, TILE - 4, 2, '#2a2925'); r(14, 11, 4, 3, '#8a826a'); }
+      r(4, 4, 4, 2, '#5b2c22'); // óxido
+      r(22, 24, 3, 2, '#5b2c22');
+    } else if (d.vertical) r(0, 0, TILE, 4, '#3b3a34'); // hoja abierta pegada al marco
+    else r(0, 0, 4, TILE, '#3b3a34');
   }
 
   buildVents() {
@@ -260,20 +262,23 @@ export class GameMap {
         const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
         let out = this.center(x, y);
         for (const [dx, dy] of dirs) if (this.at(x + dx, y + dy) === T.FLOOR) { out = this.center(x + dx, y + dy); break; }
-        const gfx = this.scene.add.graphics().setDepth(2);
-        const v: Vent = { tx: x, ty: y, out, gfx, shake: 0 };
+        const v: Vent = { tx: x, ty: y, out, shake: 0 };
         this.vents.push(v);
-        this.drawVent(v, 0);
+        const c = this.mctx!;
+        c.fillStyle = '#0b0d0f'; c.fillRect(x * TILE + 3, y * TILE + 3, TILE - 6, TILE - 6);
+        c.fillStyle = '#6d7a80';
+        for (let i = 0; i < 5; i++) c.fillRect(x * TILE + 4, y * TILE + 5 + i * 5, TILE - 8, 2);
+        c.fillStyle = '#9aa6aa'; c.fillRect(x * TILE + 4, y * TILE + 4, 2, 2); c.fillRect(x * TILE + TILE - 6, y * TILE + 4, 2, 2);
       }
+    this.mapTex!.refresh();
   }
 
-  drawVent(v: Vent, time: number) {
-    const g = v.gfx;
-    g.clear();
-    const ox = v.shake > 0 ? Math.sin(time * 0.09) * 1.6 * v.shake : 0;
-    const oy = v.shake > 0 ? Math.cos(time * 0.11) * 1.2 * v.shake : 0;
+  /** Rejilla vibrando: se pinta encima de la estática con un Graphics compartido (solo mientras vibra). */
+  drawVent(g: Phaser.GameObjects.Graphics, v: Vent, time: number) {
+    const ox = v.shake > 0 ? Math.round(Math.sin(time * 0.09) * 1.6) : 0;
+    const oy = v.shake > 0 ? Math.round(Math.cos(time * 0.11) * 1.2) : 0;
+    g.fillStyle(0x0b0d0f).fillRect(v.tx * TILE + 3, v.ty * TILE + 3, TILE - 6, TILE - 6);
     const x = v.tx * TILE + 4 + ox, y = v.ty * TILE + 4 + oy;
-    g.fillStyle(0x0b0d0f).fillRect(x, y, TILE - 8, TILE - 8);
     g.fillStyle(0x6d7a80);
     for (let i = 0; i < 5; i++) g.fillRect(x, y + 1 + i * 5, TILE - 8, 2);
     g.fillStyle(0x9aa6aa).fillRect(x, y, 2, 2).fillRect(x + TILE - 10, y, 2, 2);
@@ -375,6 +380,7 @@ export class GameMap {
       px(x + 1, y + 1, TILE - 2, TILE - 2, '#1b2a20');
       px(x + 3, y + 3, TILE - 6, TILE - 6, '#253a2b');
     }
-    this.scene.textures.addCanvas(key, canvas);
+    this.mapTex = this.scene.textures.addCanvas(key, canvas);
+    this.mctx = ctx;
   }
 }

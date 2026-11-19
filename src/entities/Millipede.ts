@@ -17,10 +17,18 @@ export class Millipede extends Creature {
   private coilFrom: { x: number; y: number }[] = [];
   private blocker: Phaser.GameObjects.Zone | null = null;
   private moving = false;
+  private parts: Phaser.GameObjects.Image[];
+  private ring: Phaser.GameObjects.Arc;
 
   constructor(scene: Phaser.Scene, ctx: GameCtx, x: number, y: number) {
     super(scene, ctx, x, y);
     this.chain = new SegmentChain(MILLIPEDE.segments, MILLIPEDE.segmentSpacing, x, y, 0, -1);
+    this.gfx.setDepth(7);
+    // La cabeza es parts[0]; se crean de la cola a la cabeza para que la cabeza quede encima
+    const imgs: Phaser.GameObjects.Image[] = [];
+    for (let i = MILLIPEDE.segments - 1; i >= 0; i--) imgs[i] = scene.add.image(x, y, i === 0 ? 'mhead' : i % 2 ? 'mseg_a' : 'mseg_b').setDepth(8);
+    this.parts = imgs;
+    this.ring = scene.add.circle(x, y, 10).setStrokeStyle(1, 0xffd9a0).setDepth(8).setVisible(false);
     this.setState('SLEEP');
     Audio.millipedeLoop(this.voice);
   }
@@ -172,7 +180,8 @@ export class Millipede extends Creature {
     const n = pts.length;
     const t = time / 1000;
     const coiled = this.state === 'COILED';
-    // Patas: cientos de patitas diminutas en onda
+    // Patas: cientos de patitas diminutas en onda (líneas: baratas)
+    g.lineStyle(1, 0xa86a48, 1);
     for (let i = n - 1; i >= 1; i--) {
       const a = this.chain.angle(i);
       const px = -Math.sin(a), py = Math.cos(a);
@@ -182,30 +191,31 @@ export class Millipede extends Creature {
         const along = (k - 0.5) * 4;
         const bx = pts[i].x + Math.cos(a) * along, by = pts[i].y + Math.sin(a) * along;
         const lx = Math.cos(a + wave) * 2.5, ly = Math.sin(a + wave) * 2.5;
-        g.lineStyle(1, 0xa86a48, 1);
         g.lineBetween(bx + px * r, by + py * r, bx + px * (r + 3) - lx, by + py * (r + 3) - ly);
         g.lineBetween(bx - px * r, by - py * r, bx - px * (r + 3) - lx, by - py * (r + 3) - ly);
       }
     }
-    // Segmentos (de la cola a la cabeza)
-    for (let i = n - 1; i >= 0; i--) {
-      const r = this.segR(i);
-      g.fillStyle(0x2a0f09).fillCircle(pts[i].x, pts[i].y + 1, r + 0.5);
-      g.fillStyle(i % 2 ? 0x56200f : 0x4a1b0e).fillCircle(pts[i].x, pts[i].y, r);
-      g.fillStyle(0x7a3418).fillCircle(pts[i].x - 1, pts[i].y - 1, r * 0.45);
+    // Segmentos: sprites (cola debajo, cabeza encima)
+    for (let i = 0; i < n; i++) {
+      const s = this.segR(i) / 6.5;
+      this.parts[i].setPosition(pts[i].x, pts[i].y).setScale(s).setRotation(this.chain.angle(i));
     }
-    // Cabeza + antenas
     const h = pts[0];
     const ha = coiled ? this.heading : this.chain.angle(0);
-    g.fillStyle(0x3a140a).fillCircle(h.x, h.y, 6.5);
+    this.parts[0].setRotation(ha);
+    // Antenas
     g.lineStyle(1, 0xb07a58);
     const tw = Math.sin(t * 9) * 0.25;
-    g.lineBetween(h.x, h.y, h.x + Math.cos(ha - 0.5 + tw) * 10, h.y + Math.sin(ha - 0.5 + tw) * 10);
-    g.lineBetween(h.x, h.y, h.x + Math.cos(ha + 0.5 - tw) * 10, h.y + Math.sin(ha + 0.5 - tw) * 10);
-    // brillo húmedo cuando lo ilumina la luz (feedback de que está funcionando)
+    g.lineBetween(h.x, h.y, h.x + Math.cos(ha - 0.5 + tw) * 11, h.y + Math.sin(ha - 0.5 + tw) * 11);
+    g.lineBetween(h.x, h.y, h.x + Math.cos(ha + 0.5 - tw) * 11, h.y + Math.sin(ha + 0.5 - tw) * 11);
+    // Brillo húmedo mientras la luz lo está "cargando" (feedback de que funciona)
     if (this.lightTimer > 0.1 && !coiled) {
       const k = this.lightTimer / MILLIPEDE.lightTimeToCoil;
-      g.lineStyle(1, 0xffd9a0, 0.6 * k).strokeCircle(h.x, h.y, 8 + k * 3);
+      this.parts[0].setTint(Phaser.Display.Color.GetColor(255, 200 + 55 * k, 160 + 60 * k));
+      this.ring.setVisible(true).setPosition(h.x, h.y).setScale(0.9 + k * 0.5).setAlpha(0.6 * k);
+    } else {
+      this.parts[0].clearTint();
+      this.ring.setVisible(false);
     }
   }
 
@@ -216,6 +226,8 @@ export class Millipede extends Creature {
 
   destroy() {
     if (this.blocker) this.ctx.removeBlocker(this.blocker);
+    this.parts.forEach((p) => p.destroy());
+    this.ring.destroy();
     super.destroy();
   }
 }

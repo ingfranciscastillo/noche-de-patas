@@ -21,9 +21,16 @@ export class CamelSpider extends Creature {
   private jaw = 0;
   private shakeSpot: Pt | null = null;
   heardFromPlayer = false;
+  private abd: Phaser.GameObjects.Image;
+  private thx: Phaser.GameObjects.Image;
+  private gfxTop: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, ctx: GameCtx, x: number, y: number) {
     super(scene, ctx, x, y);
+    this.gfx.setDepth(8);
+    this.abd = scene.add.image(x, y, 'sabd').setDepth(8);
+    this.thx = scene.add.image(x, y, 'sthx').setDepth(8);
+    this.gfxTop = scene.add.graphics().setDepth(8.5);
     this.setState('PATROL');
     ctx.noise.on((e) => this.onNoise(e));
   }
@@ -216,27 +223,30 @@ export class CamelSpider extends Creature {
         g.lineStyle(1, 0xc8ad6e).lineBetween(kx, ky, fx, fy);
       }
     }
-    // Abdomen peludo
-    g.fillStyle(0x6e5a32).fillEllipse(cx - ca * 9, cy - sa * 9, 16, 16);
-    g.fillStyle(0xb39a5e).fillCircle(cx - ca * 9, cy - sa * 9, 6.5);
-    for (let i = 0; i < 6; i++) {
-      const ha = a + i;
-      g.fillStyle(0xd8c58e).fillRect(cx - ca * 9 + Math.cos(ha) * 5, cy - sa * 9 + Math.sin(ha) * 5, 1, 1);
-    }
-    // Cefalotórax
-    g.fillStyle(0xc4a66a).fillCircle(cx, cy, 5.5);
-    // Pedipalpos (parecen patas extra delante)
+    // Abdomen peludo y cefalotórax: sprites
+    this.abd.setPosition(cx - ca * 9, cy - sa * 9).setRotation(a);
+    this.thx.setPosition(cx, cy).setRotation(a);
+    // Pedipalpos (parecen patas extra delante) y quelíceros, por encima del cuerpo
+    const gt = this.gfxTop;
+    gt.clear();
     for (let side = -1; side <= 1; side += 2) {
       const pa = a + side * 0.55 + Math.sin(t * 6 + side) * 0.12;
-      g.lineStyle(2, 0xd9c089).lineBetween(cx + ca * 4, cy + sa * 4, cx + Math.cos(pa) * 15, cy + Math.sin(pa) * 15);
+      gt.lineStyle(2, 0xd9c089).lineBetween(cx + ca * 4, cy + sa * 4, cx + Math.cos(pa) * 15, cy + Math.sin(pa) * 15);
     }
     // Quelíceros enormes que se abren y cierran
     const open = 0.15 + (Math.sin(this.jaw) * 0.5 + 0.5) * 0.35;
     for (let side = -1; side <= 1; side += 2) {
       const ja = a + side * open;
       const jx = cx + ca * 5 + px * side * 2, jy = cy + sa * 5 + py * side * 2;
-      g.fillStyle(0x8a6c3a).fillEllipse(jx + Math.cos(ja) * 4, jy + Math.sin(ja) * 4, 7, 7);
-      g.lineStyle(2, 0x2a1d10).lineBetween(jx + Math.cos(ja) * 5, jy + Math.sin(ja) * 5, jx + Math.cos(ja - side * 0.6) * 9, jy + Math.sin(ja - side * 0.6) * 9);
+      gt.lineStyle(4, 0x8a6c3a).lineBetween(jx, jy, jx + Math.cos(ja) * 6, jy + Math.sin(ja) * 6);
+      gt.lineStyle(2, 0x2a1d10).lineBetween(jx + Math.cos(ja) * 5, jy + Math.sin(ja) * 5, jx + Math.cos(ja - side * 0.6) * 9, jy + Math.sin(ja - side * 0.6) * 9);
     }
+  }
+
+  destroy() {
+    this.abd.destroy();
+    this.thx.destroy();
+    this.gfxTop.destroy();
+    super.destroy();
   }
 }

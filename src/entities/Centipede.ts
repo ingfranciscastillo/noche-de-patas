@@ -24,13 +24,20 @@ export class Centipede extends Creature {
   private lunge = { x: 0, y: 0 };
   private skitter = 0;
   private wave = 0;
+  private parts: Phaser.GameObjects.Image[];
+  private partsVisible = false;
+  private gfxTop: Phaser.GameObjects.Graphics;
 
   constructor(scene: Phaser.Scene, ctx: GameCtx, vent: Vent) {
     super(scene, ctx, vent.out.x, vent.out.y);
     this.vent = vent;
     this.chain = new SegmentChain(CENTIPEDE.segments, CENTIPEDE.segmentSpacing, vent.out.x, vent.out.y);
     this.setState('DORMANT');
-    this.gfx.setVisible(false);
+    this.gfx.setDepth(7);
+    const imgs: Phaser.GameObjects.Image[] = [];
+    for (let i = CENTIPEDE.segments - 1; i >= 0; i--) imgs[i] = scene.add.image(vent.out.x, vent.out.y, i === 0 ? 'chead' : i % 2 ? 'cseg_a' : 'cseg_b').setDepth(8).setVisible(false);
+    this.parts = imgs;
+    this.gfxTop = scene.add.graphics().setDepth(8.5);
   }
 
   get isOut() {
@@ -77,7 +84,6 @@ export class Centipede extends Creature {
         if (this.stateTime >= CENTIPEDE.telegraphTime) {
           this.vent.shake = 0;
           this.chain.reset(this.vent.out.x, this.vent.out.y);
-          this.gfx.setVisible(true);
           Audio.hiss(this.x - p.x, this.y - p.y, CENTIPEDE.audioRange * 1.5);
           this.sub = 'CRAWL';
           this.subTime = 0;
@@ -107,7 +113,6 @@ export class Centipede extends Creature {
       }
       case 'RETREAT': {
         if (this.followPath(dt, CENTIPEDE.retreatSpeed)) {
-          this.gfx.setVisible(false);
           this.setState('DORMANT');
         }
         break;
@@ -229,58 +234,58 @@ export class Centipede extends Creature {
   draw(time: number) {
     const g = this.gfx;
     g.clear();
-    if (!this.isOut) return;
+    this.gfxTop.clear();
+    const out = this.isOut;
+    if (out !== this.partsVisible) {
+      this.partsVisible = out;
+      this.parts.forEach((p) => p.setVisible(out));
+    }
+    if (!out) return;
     const pts = this.chain.pts;
     const n = pts.length;
     const t = time / 1000;
     const stun = this.sub === 'STUN';
     // Patas amarillentas, una por lado y segmento, en onda fluida
+    g.lineStyle(1, 0xe0c060, 1);
     for (let i = n - 1; i >= 1; i--) {
       const a = this.chain.angle(i);
-      const px = -Math.sin(a), py = Math.cos(a);
       const sw = Math.sin(this.wave - i * 0.7) * 0.7;
       const len = 7;
-      g.lineStyle(1, 0xe0c060, 1);
-      g.lineBetween(pts[i].x, pts[i].y, pts[i].x + (px * Math.cos(sw) - Math.cos(a) * Math.sin(sw)) * len, pts[i].y + (py * Math.cos(sw) - Math.sin(a) * Math.sin(sw)) * len);
-      g.lineBetween(pts[i].x, pts[i].y, pts[i].x - (px * Math.cos(-sw) + Math.cos(a) * Math.sin(-sw)) * len, pts[i].y - (py * Math.cos(-sw) + Math.sin(a) * Math.sin(-sw)) * len);
+      const l1 = a + Math.PI / 2 + sw, l2 = a - Math.PI / 2 - sw;
+      g.lineBetween(pts[i].x, pts[i].y, pts[i].x + Math.cos(l1) * len, pts[i].y + Math.sin(l1) * len);
+      g.lineBetween(pts[i].x, pts[i].y, pts[i].x + Math.cos(l2) * len, pts[i].y + Math.sin(l2) * len);
     }
-    // Cuerpo aplanado naranja-rojizo
-    for (let i = n - 1; i >= 0; i--) {
-      const a = this.chain.angle(i);
-      const w = i === 0 ? 5 : 4.5 - (i / n) * 1.5;
-      g.fillStyle(0x2a0d05).fillEllipse(pts[i].x, pts[i].y + 1, w * 2.4, w * 2.4);
-      g.fillStyle(i % 2 ? 0xb8461c : 0xa13b16);
-      g.fillPoints(this.rectPts(pts[i].x, pts[i].y, a, 4, w) as unknown as Phaser.Math.Vector2[], true);
-      g.fillStyle(0x3a120a).fillRect(pts[i].x - 0.5, pts[i].y - 0.5, 1, 1);
+    // Cuerpo aplanado naranja-rojizo (sprites)
+    for (let i = 0; i < n; i++) {
+      const sc = i === 0 ? 1 : 1 - (i / n) * 0.35;
+      this.parts[i].setPosition(pts[i].x, pts[i].y).setRotation(this.chain.angle(i)).setScale(1, sc);
     }
-    // Cabeza, antenas y forcípulas venenosas
+    // Cabeza, antenas y forcípulas venenosas (encima)
+    const gt = this.gfxTop;
     const h = pts[0];
     const a = this.state === 'OUT' || this.state === 'ALARM' ? this.heading : this.chain.angle(0);
-    g.fillStyle(0x7a2a10).fillCircle(h.x, h.y, 5);
+    this.parts[0].setRotation(a);
     const tw = Math.sin(t * 11) * 0.3;
-    g.lineStyle(1, 0xd8a050);
-    g.lineBetween(h.x, h.y, h.x + Math.cos(a - 0.4 + tw) * 14, h.y + Math.sin(a - 0.4 + tw) * 14);
-    g.lineBetween(h.x, h.y, h.x + Math.cos(a + 0.4 - tw) * 14, h.y + Math.sin(a + 0.4 - tw) * 14);
+    gt.lineStyle(1, 0xd8a050);
+    gt.lineBetween(h.x, h.y, h.x + Math.cos(a - 0.4 + tw) * 14, h.y + Math.sin(a - 0.4 + tw) * 14);
+    gt.lineBetween(h.x, h.y, h.x + Math.cos(a + 0.4 - tw) * 14, h.y + Math.sin(a + 0.4 - tw) * 14);
     const open = this.sub === 'WINDUP' ? 0.9 : this.sub === 'LUNGE' ? 0.5 : 0.25;
-    g.lineStyle(2, 0x1a0804);
-    g.lineBetween(h.x + Math.cos(a) * 3, h.y + Math.sin(a) * 3, h.x + Math.cos(a - open) * 8, h.y + Math.sin(a - open) * 8);
-    g.lineBetween(h.x + Math.cos(a) * 3, h.y + Math.sin(a) * 3, h.x + Math.cos(a + open) * 8, h.y + Math.sin(a + open) * 8);
+    gt.lineStyle(2, 0x1a0804);
+    gt.lineBetween(h.x + Math.cos(a) * 3, h.y + Math.sin(a) * 3, h.x + Math.cos(a - open) * 8, h.y + Math.sin(a - open) * 8);
+    gt.lineBetween(h.x + Math.cos(a) * 3, h.y + Math.sin(a) * 3, h.x + Math.cos(a + open) * 8, h.y + Math.sin(a + open) * 8);
     if (stun) {
       // desorientado: pequeñas chispas sobre la cabeza
+      gt.fillStyle(0xfff0b0, 0.8);
       for (let i = 0; i < 3; i++) {
         const sa = t * 6 + (i * Math.PI * 2) / 3;
-        g.fillStyle(0xfff0b0, 0.8).fillRect(h.x + Math.cos(sa) * 9, h.y + Math.sin(sa) * 9, 2, 2);
+        gt.fillRect(h.x + Math.cos(sa) * 9, h.y + Math.sin(sa) * 9, 2, 2);
       }
     }
   }
 
-  private rectPts(x: number, y: number, a: number, hl: number, hw: number) {
-    const ca = Math.cos(a), sa = Math.sin(a);
-    return [
-      { x: x + ca * hl - sa * hw, y: y + sa * hl + ca * hw },
-      { x: x - ca * hl - sa * hw, y: y - sa * hl + ca * hw },
-      { x: x - ca * hl + sa * hw, y: y - sa * hl - ca * hw },
-      { x: x + ca * hl + sa * hw, y: y + sa * hl - ca * hw },
-    ];
+  destroy() {
+    this.parts.forEach((p) => p.destroy());
+    this.gfxTop.destroy();
+    super.destroy();
   }
 }

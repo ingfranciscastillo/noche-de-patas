@@ -13,15 +13,18 @@ export class Hud {
   private toastText: Phaser.GameObjects.Text;
   private promptText: Phaser.GameObjects.Text;
   private debugText: Phaser.GameObjects.Text;
-  private blood: Phaser.GameObjects.Graphics;
+  private blood: Phaser.GameObjects.Image | null = null;
+  private hearts: Phaser.GameObjects.Image[] = [];
+  private lastHealth = -1;
+  private lastColor = '';
   private toastLife = 0;
   private lastObjective = '';
   private objectiveFlash = 0;
 
   constructor(private scene: Phaser.Scene) {
     const fix = <T extends Phaser.GameObjects.GameObject & { setScrollFactor(v: number): T; setDepth(v: number): T }>(o: T) => o.setScrollFactor(0).setDepth(200);
-    this.blood = fix(scene.add.graphics());
     this.g = fix(scene.add.graphics());
+    for (let i = 0; i < PLAYER.maxHealth; i++) this.hearts.push(fix(scene.add.image(16 + i * 26, 48, 'heart_on').setOrigin(0)));
     const style = { fontFamily: FONT, fontSize: '16px', color: '#b9c4c4', fontStyle: 'bold' };
     this.fuseText = fix(scene.add.text(VIEW_W - 20, 18, '', style).setOrigin(1, 0));
     this.bottleText = fix(scene.add.text(VIEW_W - 20, 42, '', { ...style, fontSize: '13px', color: '#8fa0a0' }).setOrigin(1, 0));
@@ -59,10 +62,10 @@ export class Hud {
     if (!blinkLow) g.fillStyle(col).fillRect(bx + 3, by + 3, Math.max(0, (bw - 6) * pct), bh - 6);
     if (!p.flashlightOn) g.lineStyle(2, 0x000000, 0.8).lineBetween(bx + 2, by + bh - 2, bx + bw - 2, by + 2);
 
-    // --- Corazones
-    for (let i = 0; i < PLAYER.maxHealth; i++) {
-      const hx = 26 + i * 26, hy = 56;
-      this.heart(g, hx, hy, i < p.health ? 0xa83232 : 0x2a2a2a);
+    // --- Corazones (solo cambian al recibir daño)
+    if (p.health !== this.lastHealth) {
+      this.lastHealth = p.health;
+      this.hearts.forEach((h, i) => h.setTexture(i < p.health ? 'heart_on' : 'heart_off'));
     }
 
     // --- Fusibles
@@ -73,7 +76,8 @@ export class Hud {
     // --- Objetivo
     if (objective !== this.lastObjective) { this.lastObjective = objective; this.objectiveFlash = 2; this.objective.setText(objective); }
     this.objectiveFlash = Math.max(0, this.objectiveFlash - dt);
-    this.objective.setColor(this.objectiveFlash > 0 && Math.floor(this.objectiveFlash * 4) % 2 === 0 ? '#e0e8c8' : '#7f9389');
+    const objCol = this.objectiveFlash > 0 && Math.floor(this.objectiveFlash * 4) % 2 === 0 ? '#e0e8c8' : '#7f9389';
+    if (objCol !== this.lastColor) { this.lastColor = objCol; this.objective.setColor(objCol); } // setColor re-renderiza el texto
 
     // --- Aviso temporal
     if (this.toastLife > 0) {
@@ -82,34 +86,27 @@ export class Hud {
     } else this.toastText.setAlpha(0);
   }
 
-  /** Salpicaduras en los bordes tras el primer golpe (sin gore: manchas oscuras). */
+  /** Salpicaduras en los bordes tras el primer golpe (sin gore: manchas oscuras). Se hornea en una textura. */
   bloodSplat() {
-    const g = this.blood;
-    g.clear();
+    if (this.blood) return;
+    const key = 'hud_blood';
+    if (this.scene.textures.exists(key)) this.scene.textures.remove(key);
+    const t = this.scene.textures.createCanvas(key, VIEW_W, VIEW_H)!;
+    const c = t.context;
     const spots: [number, number][] = [[0, 0], [VIEW_W, 0], [0, VIEW_H], [VIEW_W, VIEW_H]];
     for (const [cx, cy] of spots) {
       for (let i = 0; i < 14; i++) {
         const r = 6 + Math.random() * 30;
         const ox = cx === 0 ? Math.random() * 90 : -Math.random() * 90;
         const oy = cy === 0 ? Math.random() * 70 : -Math.random() * 70;
-        g.fillStyle(0x4a0d0d, 0.25 + Math.random() * 0.3).fillCircle(cx + ox, cy + oy, r);
+        c.fillStyle = `rgba(74,13,13,${0.25 + Math.random() * 0.3})`;
+        c.beginPath();
+        c.arc(cx + ox, cy + oy, r, 0, Math.PI * 2);
+        c.fill();
       }
     }
-  }
-
-  private heart(g: Phaser.GameObjects.Graphics, x: number, y: number, c: number) {
-    const px = [
-      '.##.##.',
-      '#######',
-      '#######',
-      '.#####.',
-      '..###..',
-      '...#...',
-    ];
-    g.fillStyle(0x000000, 0.6);
-    px.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') g.fillRect(x + i * 3 - 9, y + j * 3 - 7, 3, 3); }));
-    g.fillStyle(c);
-    px.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') g.fillRect(x + i * 3 - 10, y + j * 3 - 8, 3, 3); }));
+    t.refresh();
+    this.blood = this.scene.add.image(0, 0, key).setOrigin(0).setScrollFactor(0).setDepth(199);
   }
 
   private fuseIcon(g: Phaser.GameObjects.Graphics, x: number, y: number) {
@@ -118,6 +115,8 @@ export class Hud {
   }
 
   destroy() {
-    [this.g, this.blood, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText].forEach((o) => o.destroy());
+    this.blood?.destroy();
+    this.hearts.forEach((h) => h.destroy());
+    [this.g, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText].forEach((o) => o.destroy());
   }
 }
