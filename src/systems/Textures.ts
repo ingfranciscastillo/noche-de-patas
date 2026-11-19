@@ -85,11 +85,45 @@ export function generateTextures(scene: Phaser.Scene) {
   });
 
   // Objetos
-  make(scene, 'it_fuse', 20, 14, (c) => {
-    c.fillStyle = 'rgba(0,0,0,0.4)'; c.fillRect(3, 10, 14, 3);
-    c.fillStyle = '#8a6d2a'; c.fillRect(4, 4, 12, 6);
-    c.fillStyle = '#d9b555'; c.fillRect(5, 5, 10, 2);
-    c.fillStyle = '#aeb8b8'; c.fillRect(2, 5, 2, 4); c.fillRect(16, 5, 2, 4);
+  // Fusible de cartucho: casquillos metálicos estriados, tubo de cristal con reflejo y filamento ámbar
+  make(scene, 'it_fuse', 28, 16, (c) => {
+    const px = (x: number, y: number, w: number, h: number, col: string) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+    px(4, 13, 21, 2, 'rgba(0,0,0,0.45)'); // sombra
+    // Tubo de cristal (x 8..19): interior oscuro azulado, bordes y reflejo
+    px(8, 3, 12, 9, '#1c2a2e');
+    px(8, 3, 12, 1, '#6f8e93'); // borde superior
+    px(8, 11, 12, 1, '#2e4448'); // borde inferior
+    px(9, 4, 10, 1, '#cfe9ea'); // reflejo principal
+    px(10, 5, 4, 1, '#8fb3b6');
+    px(16, 10, 3, 1, '#4f6e72'); // reflejo inferior tenue
+    // Filamento en zigzag (ámbar, con núcleo brillante)
+    const ys = [7, 7, 6, 6, 7, 8, 8, 7, 6, 6, 7, 7]; // hilo continuo en zigzag
+    ys.forEach((y, i) => px(8 + i, y, 1, 1, i > 2 && i < 9 ? '#ffe7a8' : '#ffb347'));
+    ys.forEach((y, i) => { if (i > 0 && Math.abs(y - ys[i - 1]) === 1) px(8 + i, ys[i - 1], 1, 1, '#c97a2a'); }); // antialias manual del diagonal
+    // Esquinas del cristal redondeadas
+    px(8, 3, 1, 1, '#0d1416'); px(19, 3, 1, 1, '#0d1416'); px(8, 11, 1, 1, '#0d1416'); px(19, 11, 1, 1, '#0d1416');
+    // Casquillos (izquierda x 3..7, derecha x 20..24): latón con estrías
+    for (const x0 of [3, 20]) {
+      px(x0, 2, 5, 11, '#5d4a1e');
+      px(x0, 3, 5, 9, '#b8913c');
+      px(x0, 3, 5, 1, '#f0d27a'); // brillo superior
+      px(x0, 11, 5, 1, '#7a6026');
+      for (let i = 1; i < 5; i += 2) px(x0 + i, 4, 1, 7, '#8f6f2c'); // estrías
+    }
+    // Contactos / cuchillas en los extremos
+    px(1, 6, 2, 3, '#aeb8bc'); px(1, 6, 2, 1, '#e6eef0');
+    px(25, 6, 2, 3, '#aeb8bc'); px(25, 6, 2, 1, '#e6eef0');
+    // Juntas oscuras entre casquillo y cristal
+    px(8, 3, 1, 9, '#3a2e12'); px(19, 3, 1, 9, '#3a2e12');
+  });
+  // Versión pequeña para el HUD
+  make(scene, 'hud_fuse', 20, 12, (c) => {
+    const px = (x: number, y: number, w: number, h: number, col: string) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+    px(6, 2, 8, 8, '#1c2a2e');
+    px(6, 3, 8, 1, '#cfe9ea');
+    [6, 5, 5, 6, 7, 7, 6, 6].forEach((y, i) => px(6 + i, y, 1, 1, '#ffb347'));
+    for (const x0 of [2, 14]) { px(x0, 1, 4, 10, '#5d4a1e'); px(x0, 2, 4, 8, '#b8913c'); px(x0, 2, 4, 1, '#f0d27a'); px(x0 + 1, 3, 1, 6, '#8f6f2c'); }
+    px(0, 4, 2, 3, '#aeb8bc'); px(18, 4, 2, 3, '#aeb8bc');
   });
   make(scene, 'it_battery', 12, 18, (c) => {
     c.fillStyle = 'rgba(0,0,0,0.4)'; c.fillRect(2, 15, 9, 3);

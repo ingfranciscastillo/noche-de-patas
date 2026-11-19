@@ -15,6 +15,7 @@ export class Hud {
   private promptText: Phaser.GameObjects.Text;
   private debugText: Phaser.GameObjects.Text;
   private modeText: Phaser.GameObjects.Text;
+  private fuseImg: Phaser.GameObjects.Image;
   private lastMode = '';
   private blood: Phaser.GameObjects.Image | null = null;
   private hearts: Phaser.GameObjects.Image[] = [];
@@ -34,6 +35,7 @@ export class Hud {
     this.objective = fix(scene.add.text(VIEW_W / 2, VIEW_H - 26, '', { ...style, fontSize: '20px', color: '#8fa39a' }).setOrigin(0.5, 1));
     this.toastText = fix(scene.add.text(VIEW_W / 2, 80, '', { ...style, fontSize: '24px', color: '#d8d0b0', align: 'center' }).setOrigin(0.5));
     this.promptText = scene.add.text(0, 0, '', { ...style, fontSize: '20px', color: '#e8e0c0', backgroundColor: '#000000aa', padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(150);
+    this.fuseImg = fix(scene.add.image(0, 20, 'hud_fuse').setOrigin(1, 0).setScale(1.5));
     this.modeText = fix(scene.add.text(20, 74, '', { ...style, fontSize: '20px', color: '#8fa39a' }));
     this.debugText = fix(scene.add.text(12, VIEW_H - 12, '', { ...style, fontSize: '16px', color: '#7fff9f' }).setOrigin(0, 1));
   }
@@ -81,7 +83,7 @@ export class Hud {
 
     // --- Fusibles
     this.fuseText.setText(`FUSIBLES ${fusesPlaced + p.fusesCarried}/${ITEMS.fusesNeeded}`);
-    this.fuseIcon(g, VIEW_W - 20 - this.fuseText.width - 18, 20);
+    this.fuseImg.setPosition(VIEW_W - 26 - this.fuseText.width, 20);
     this.bottleText.setText(p.bottles > 0 ? `BOTELLAS ${p.bottles}  [Q]` : '');
 
     // --- Objetivo
@@ -120,14 +122,9 @@ export class Hud {
     this.blood = this.scene.add.image(0, 0, key).setOrigin(0).setScrollFactor(0).setDepth(199);
   }
 
-  private fuseIcon(g: Phaser.GameObjects.Graphics, x: number, y: number) {
-    g.fillStyle(0xc9a548).fillRect(x, y + 4, 12, 8);
-    g.fillStyle(0x9aa8a8).fillRect(x - 3, y + 6, 3, 4).fillRect(x + 12, y + 6, 3, 4);
-  }
-
   destroy() {
     this.blood?.destroy();
     this.hearts.forEach((h) => h.destroy());
-    [this.g, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText, this.modeText].forEach((o) => o.destroy());
+    [this.g, this.fuseText, this.bottleText, this.objective, this.toastText, this.promptText, this.debugText, this.modeText, this.fuseImg].forEach((o) => o.destroy());
   }
 }
