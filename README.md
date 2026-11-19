@@ -4,6 +4,8 @@ Juego web de supervivencia y terror 2D (vista cenital). Estás atrapado de noche
 abandonado: encuentra 3 fusibles, reactiva el generador y escapa por Recepción. Te acechan un
 **milpiés gigante** (olfato), una **araña camello** (oído) y un **ciempiés gigante** (luz).
 
+**Jugar en el navegador:** https://ingfranciscastillo.github.io/noche-de-patas/
+
 Todo se genera por código: gráficos en Canvas/Phaser y audio sintetizado con Web Audio API.
 No hay ni un solo archivo de imagen o sonido en el repositorio.
 
@@ -73,7 +75,8 @@ src/
 4. En *Edit game*, marca el archivo como **This file will be played in the browser** y guarda.
 5. Para actualizar, vuelve a hacer `butler push` al **mismo** canal `html`.
 
-En GitHub Pages basta con publicar el contenido de `dist/`.
+En GitHub Pages se publica solo: el workflow [`deploy.yml`](.github/workflows/deploy.yml) compila y
+despliega `dist/` en cada push a `main`.
 
 ## Decisiones
 
