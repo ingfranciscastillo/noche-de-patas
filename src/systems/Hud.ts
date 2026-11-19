@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { ITEMS, LIGHT, PLAYER, VIEW_H, VIEW_W } from '../data/tuning';
 import type { Player } from '../entities/Player';
 
-export const FONT = '"Courier New", Courier, monospace';
+// VT323 (OFL) empaquetada desde npm por Vite: sin peticiones externas en tiempo de ejecución.
+export const FONT = '"VT323", "Courier New", monospace';
 
 /** HUD mínimo: pila, corazones, fusibles, botellas, objetivo y avisos. */
 export class Hud {
@@ -25,13 +26,13 @@ export class Hud {
     const fix = <T extends Phaser.GameObjects.GameObject & { setScrollFactor(v: number): T; setDepth(v: number): T }>(o: T) => o.setScrollFactor(0).setDepth(200);
     this.g = fix(scene.add.graphics());
     for (let i = 0; i < PLAYER.maxHealth; i++) this.hearts.push(fix(scene.add.image(16 + i * 26, 48, 'heart_on').setOrigin(0)));
-    const style = { fontFamily: FONT, fontSize: '16px', color: '#b9c4c4', fontStyle: 'bold' };
+    const style = { fontFamily: FONT, fontSize: '24px', color: '#b9c4c4' };
     this.fuseText = fix(scene.add.text(VIEW_W - 20, 18, '', style).setOrigin(1, 0));
-    this.bottleText = fix(scene.add.text(VIEW_W - 20, 42, '', { ...style, fontSize: '13px', color: '#8fa0a0' }).setOrigin(1, 0));
-    this.objective = fix(scene.add.text(VIEW_W / 2, VIEW_H - 26, '', { ...style, fontSize: '14px', color: '#8fa39a' }).setOrigin(0.5, 1));
-    this.toastText = fix(scene.add.text(VIEW_W / 2, 80, '', { ...style, fontSize: '18px', color: '#d8d0b0', align: 'center' }).setOrigin(0.5));
-    this.promptText = scene.add.text(0, 0, '', { ...style, fontSize: '12px', color: '#e8e0c0', backgroundColor: '#000000aa', padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(150);
-    this.debugText = fix(scene.add.text(12, VIEW_H - 12, '', { ...style, fontSize: '11px', color: '#7fff9f' }).setOrigin(0, 1));
+    this.bottleText = fix(scene.add.text(VIEW_W - 20, 42, '', { ...style, fontSize: '20px', color: '#8fa0a0' }).setOrigin(1, 0));
+    this.objective = fix(scene.add.text(VIEW_W / 2, VIEW_H - 26, '', { ...style, fontSize: '20px', color: '#8fa39a' }).setOrigin(0.5, 1));
+    this.toastText = fix(scene.add.text(VIEW_W / 2, 80, '', { ...style, fontSize: '24px', color: '#d8d0b0', align: 'center' }).setOrigin(0.5));
+    this.promptText = scene.add.text(0, 0, '', { ...style, fontSize: '20px', color: '#e8e0c0', backgroundColor: '#000000aa', padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(150);
+    this.debugText = fix(scene.add.text(12, VIEW_H - 12, '', { ...style, fontSize: '16px', color: '#7fff9f' }).setOrigin(0, 1));
   }
 
   toast(msg: string, time = 3) {

@@ -23,12 +23,12 @@ export class WinScene extends Phaser.Scene {
     });
 
     this.cameras.main.setBackgroundColor('#050a07');
-    this.add.text(cx, 110, 'HAS ESCAPADO', { fontFamily: FONT, fontSize: '54px', color: '#8fbf7a', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(cx, 180, `Noche ${data.night} superada en ${fmtTime(data.time)}${isBest ? '  (mejor tiempo)' : ''}`, { fontFamily: FONT, fontSize: '18px', color: '#c8d8c0' }).setOrigin(0.5);
+    this.add.text(cx, 110, 'HAS ESCAPADO', { fontFamily: FONT, fontSize: '72px', color: '#8fbf7a' }).setOrigin(0.5);
+    this.add.text(cx, 180, `Noche ${data.night} superada en ${fmtTime(data.time)}${isBest ? '  (mejor tiempo)' : ''}`, { fontFamily: FONT, fontSize: '24px', color: '#c8d8c0' }).setOrigin(0.5);
     const msg = data.night >= 3
       ? 'Has sobrevivido a las tres noches.\nEl laboratorio queda en silencio... por ahora.'
       : newlyUnlocked ? `Noche ${next} desbloqueada.\nAlgo nuevo te espera ahí dentro.` : '';
-    this.add.text(cx, 245, msg, { fontFamily: FONT, fontSize: '15px', color: '#7f9389', align: 'center', lineSpacing: 6 }).setOrigin(0.5);
+    this.add.text(cx, 245, msg, { fontFamily: FONT, fontSize: '24px', color: '#7f9389', align: 'center', lineSpacing: 6 }).setOrigin(0.5);
     const list = new ButtonList(this);
     if (data.night < 3) list.add(cx, 330, `NOCHE ${next}`, () => this.scene.start('Game', { night: next }));
     list.add(cx, 380, 'REPETIR NOCHE', () => this.scene.start('Game', { night: data.night }));

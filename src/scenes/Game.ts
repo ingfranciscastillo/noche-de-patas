@@ -259,8 +259,6 @@ export class GameScene extends Phaser.Scene implements GameCtx {
       sneak: k.CTRL.isDown || k.C.isDown,
     };
     p.update(dt, this.now, intent);
-    const ptr = this.input.activePointer;
-    if (!p.hidden) p.aim = Math.atan2(this.camY + ptr.y - p.y, this.camX + ptr.x - p.x);
 
     // --- Linterna
     if (Phaser.Input.Keyboard.JustDown(k.F)) this.toggleFlashlight();
@@ -304,14 +302,14 @@ export class GameScene extends Phaser.Scene implements GameCtx {
   private render(dt: number) {
     const p = this.player;
     const cam = this.cameras.main;
-    // Cámara: sigue con suavizado y un poco de anticipación hacia donde apuntas
-    const look = p.hidden ? 0 : 40;
-    const tx = Phaser.Math.Clamp(p.x + Math.cos(p.aim) * look - VIEW_W / 2, 0, this.map.pxW - VIEW_W);
-    const ty = Phaser.Math.Clamp(p.y + Math.sin(p.aim) * look - VIEW_H / 2, 0, this.map.pxH - VIEW_H);
-    const k = 1 - Math.exp(-dt * 7);
-    this.camX += (tx - this.camX) * k;
-    this.camY += (ty - this.camY) * k;
-    cam.setScroll(Math.round(this.camX), Math.round(this.camY));
+    // Cámara fija sobre el jugador. Sin retardo ni anticipación: si la cámara se quedara atrás,
+    // el jugador se desplazaría en pantalla y, con el ratón quieto, la linterna giraría sola al caminar.
+    this.camX = Math.round(Phaser.Math.Clamp(p.x - VIEW_W / 2, 0, this.map.pxW - VIEW_W));
+    this.camY = Math.round(Phaser.Math.Clamp(p.y - VIEW_H / 2, 0, this.map.pxH - VIEW_H));
+    cam.setScroll(this.camX, this.camY);
+    // Apuntar DESPUÉS de colocar la cámara: el ángulo es el del ratón respecto al jugador en pantalla.
+    const ptr = this.input.activePointer;
+    if (!p.hidden && !this.ended) p.aim = Math.atan2(this.camY + ptr.y - p.y, this.camX + ptr.x - p.x);
 
     p.draw(dt);
     for (const c of this.creatures) c.draw(this.time.now);

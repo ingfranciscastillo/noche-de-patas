@@ -15,18 +15,18 @@ export class BootScene extends Phaser.Scene {
     generateTextures(this);
 
     const cx = VIEW_W / 2;
-    this.add.text(cx, 130, 'AVISO DE CONTENIDO', { fontFamily: FONT, fontSize: '26px', color: '#c9b37a', fontStyle: 'bold' }).setOrigin(0.5);
+    this.add.text(cx, 130, 'AVISO DE CONTENIDO', { fontFamily: FONT, fontSize: '40px', color: '#c9b37a' }).setOrigin(0.5);
     this.add
       .text(cx, 230, 'Contiene insectos y criaturas inquietantes,\nsustos repentinos y luces parpadeantes.', {
-        fontFamily: FONT, fontSize: '18px', color: '#b9c4c4', align: 'center', lineSpacing: 8,
+        fontFamily: FONT, fontSize: '24px', color: '#b9c4c4', align: 'center', lineSpacing: 8,
       })
       .setOrigin(0.5);
     this.add
       .text(cx, 320, 'Se recomienda jugar con auriculares: el sonido es tu principal herramienta.', {
-        fontFamily: FONT, fontSize: '14px', color: '#7f9389', align: 'center',
+        fontFamily: FONT, fontSize: '20px', color: '#7f9389', align: 'center',
       })
       .setOrigin(0.5);
-    const cont = this.add.text(cx, 420, '[ Haz clic o pulsa una tecla para continuar ]', { fontFamily: FONT, fontSize: '16px', color: '#e6dcb8' }).setOrigin(0.5);
+    const cont = this.add.text(cx, 420, '[ Haz clic o pulsa una tecla para continuar ]', { fontFamily: FONT, fontSize: '24px', color: '#e6dcb8' }).setOrigin(0.5);
     this.tweens.add({ targets: cont, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 });
 
     const go = () => {

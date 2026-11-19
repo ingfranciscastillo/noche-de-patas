@@ -21,10 +21,10 @@ export class GameOverScene extends Phaser.Scene {
     const cx = VIEW_W / 2;
     const c = CAUSE[data.cause] ?? CAUSE.millipede;
     this.cameras.main.setBackgroundColor('#0a0303');
-    this.add.text(cx, 120, 'HAS MUERTO', { fontFamily: FONT, fontSize: '54px', color: '#a83232', fontStyle: 'bold' }).setOrigin(0.5);
-    this.add.text(cx, 190, c.msg, { fontFamily: FONT, fontSize: '22px', color: '#d8c8b0' }).setOrigin(0.5);
-    this.add.text(cx, 230, `Noche ${data.night} · Tiempo sobrevivido ${fmtTime(data.time)}`, { fontFamily: FONT, fontSize: '15px', color: '#8f7f76' }).setOrigin(0.5);
-    this.add.text(cx, 275, c.tip, { fontFamily: FONT, fontSize: '13px', color: '#7f9389', align: 'center', wordWrap: { width: 760 } }).setOrigin(0.5);
+    this.add.text(cx, 120, 'HAS MUERTO', { fontFamily: FONT, fontSize: '72px', color: '#a83232' }).setOrigin(0.5);
+    this.add.text(cx, 190, c.msg, { fontFamily: FONT, fontSize: '32px', color: '#d8c8b0' }).setOrigin(0.5);
+    this.add.text(cx, 230, `Noche ${data.night} · Tiempo sobrevivido ${fmtTime(data.time)}`, { fontFamily: FONT, fontSize: '24px', color: '#8f7f76' }).setOrigin(0.5);
+    this.add.text(cx, 275, c.tip, { fontFamily: FONT, fontSize: '20px', color: '#7f9389', align: 'center', wordWrap: { width: 760 } }).setOrigin(0.5);
     const list = new ButtonList(this);
     list.add(cx, 350, 'REINTENTAR', () => this.scene.start('Game', { night: data.night }));
     list.add(cx, 400, 'MENÚ PRINCIPAL', () => this.scene.start('Menu'));

@@ -26,9 +26,9 @@ export class ButtonList {
     kb.on('keydown-SPACE', () => this.activate());
   }
 
-  add(x: number, y: number, label: string, action: () => void, enabled = true, size = 22) {
+  add(x: number, y: number, label: string, action: () => void, enabled = true, size = 32) {
     const t = this.scene.add
-      .text(x, y, label, { fontFamily: FONT, fontSize: `${size}px`, color: enabled ? '#a9b4b0' : '#4a504e', fontStyle: 'bold' })
+      .text(x, y, label, { fontFamily: FONT, fontSize: `${size}px`, color: enabled ? '#a9b4b0' : '#4a504e' })
       .setOrigin(0.5)
       .setDepth(10);
     const b: MenuButton = { text: t, enabled, action };

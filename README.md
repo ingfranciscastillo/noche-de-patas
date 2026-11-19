@@ -97,5 +97,10 @@ Decisiones no cubiertas por el brief, tomadas por la opción más simple que res
 - **Rendimiento:** la oscuridad se calcula a media resolución en un canvas 2D (estética pixel y
   barata); las criaturas se dibujan con sprites generados por código y líneas para las patas, porque
   las curvas de `Graphics` se re-teselan cada frame en WebGL.
+- **Fuente:** VT323 (licencia OFL), instalada con `@fontsource/vt323` y empaquetada por Vite en
+  `dist/`. No hay peticiones externas ni binarios en el repositorio (la fuente vive en
+  `node_modules`). Los tamaños de texto siguen una escala fija (16/20/24/32…) para que se vea nítida.
+- **Cámara fija sobre el jugador**, sin retardo ni anticipación: si la cámara se queda atrás, el
+  jugador se desplaza en pantalla y la linterna gira sola al caminar aunque no muevas el ratón.
 - **Audio:** el audio interno de Phaser está desactivado (`noAudio`); el único `AudioContext` lo
   crea `AudioEngine` en el primer clic del aviso de contenido.
